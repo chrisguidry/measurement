@@ -5,7 +5,7 @@ The Measurement Library is a set of classes offering full support for
 math using Dimensions, Metrics, and Quantities.
 """
 
-from __future__ import division
+from __future__ import division, unicode_literals
 
 import decimal
 import math
@@ -28,10 +28,10 @@ class MetricConversionError(Exception):
     An exception raised when a conversion between Metrics is required and
     there is no defined conversion.
 
-    >>> (5 * Celsius).to(Meter)
+    >>> (5 * Ampere).to(Meter)
     Traceback (most recent call last):
       ...
-    MetricConversionError: There is no conversion between '°C' and 'm', because they measure different Dimensions.
+    MetricConversionError: There is no conversion between 'A' and 'm', because they measure different Dimensions.
     """
 
 def isnumber(object):
@@ -40,7 +40,7 @@ def isnumber(object):
     measurement's perspective.  This may eventually be replaced when the
     Python 2.6 number classes are reorganized
     """
-    return isinstance(object, (int, long, float, complex, decimal.Decimal))
+    return isinstance(object, (int, float, complex, decimal.Decimal))
 
 class Immutable(object):
     """
@@ -69,13 +69,13 @@ class Immutable(object):
     def __setattr__(self, *args):
         "Overridden to implement object freezing."
         if hasattr(self, "frozen"):
-            raise AttributeError, self.__class__.__name__ + " is immutable."
+            raise AttributeError(self.__class__.__name__ + " is immutable.")
         super(Immutable, self).__setattr__(*args)
 
     def __delattr__(self, *args):
         "Overridden to implement object freezing."
         if hasattr(self, "frozen"):
-            raise AttributeError, self.__class__.__name__ + " is immutable."
+            raise AttributeError(self.__class__.__name__ + " is immutable.")
         super(Immutable, self).__delattr__(*args)
 
     def _internal__setattr__(self, *args):
@@ -111,7 +111,7 @@ class Dimension(Immutable):
             if isinstance(self.power, int) and abs(self.power) in range(0, 9 + 1):
                 self.power_as_typographical_symbol = ExponentTypographicalSymbols[abs(self.power)]
             else:
-                self.power_as_typographical_symbol = "^" + str(abs(self.power))
+                self.power_as_typographical_symbol = "^" + unicode(abs(self.power))
 
             super(Dimension.Term, self).__init__()
 
@@ -135,8 +135,8 @@ class Dimension(Immutable):
         def __repr__(self):
             "Produces a representation of this Dimension.Term, that when eval()ed, produces a Dimension.Term "
             "equivalent to this one."
-            return "Dimension.Term(" + repr(self.dimension) + ", " + str(self.power) + ")"
-        def __str__(self):
+            return "Dimension.Term(" + repr(self.dimension) + ", " + unicode(self.power) + ")"
+        def __unicode__(self):
             "Produces a string representation of this Dimension.Term, in typographical symbols"
             return self.typographical_symbol + self.power_as_typographical_symbol
 
@@ -211,13 +211,13 @@ class Dimension(Immutable):
     @classmethod
     def all(cls):
         dimensions = []
-        for item in globals().values():
+        for item in list(globals().values()):
             if isinstance(item, Dimension):
                 dimensions.append(item)
         return dimensions
     @classmethod
     def get_by_name(cls, name):
-        for dimension in Dimension.defined_dimensions_by_symbol.values():
+        for dimension in list(Dimension.defined_dimensions_by_symbol.values()):
             if dimension.name == name:
                 return dimension
         return None
@@ -326,14 +326,14 @@ class Dimension(Immutable):
 
         if len(parts) == 2:
             denominator_terms = Dimension.symbol_string_to_terms(parts[1])
-            denominator_terms = map(lambda term: Dimension.Term(term.dimension, 0 - term.power), denominator_terms)
+            denominator_terms = [Dimension.Term(term.dimension, 0 - term.power) for term in denominator_terms]
         else:
             denominator_terms = []
 
         terms = numerator_terms + denominator_terms
 
         if not terms:
-            raise MeasurementParsingException, "'%s' doesn't seem to correspond to any defined Dimension" % typographical_symbol
+            raise MeasurementParsingException("'%s' doesn't seem to correspond to any defined Dimension" % typographical_symbol)
 
         return Dimension(terms = terms)
 
@@ -349,7 +349,7 @@ class Dimension(Immutable):
 
         # the typographical symbols should be sorted by length, with the longest strings first, so that
         # matches for longer strings will occur before short strings, as in 'mol' and 'm'
-        dimension_tokens = map(lambda typographical_symbol: re.escape(typographical_symbol), Dimension.defined_dimensions_by_symbol.keys())
+        dimension_tokens = [re.escape(typographical_symbol) for typographical_symbol in list(Dimension.defined_dimensions_by_symbol.keys())]
         dimension_tokens.sort(lambda left, right: 0 - cmp(len(left), len(right)))
         dimension_tokens = "(" + "|".join(dimension_tokens) + ")"
 
@@ -376,7 +376,7 @@ class Dimension(Immutable):
             matched_power = match[1]
 
             if matched_symbol not in Dimension.defined_dimensions_by_symbol:
-                raise MeasurementParsingException, "Unrecognized symbol '%s' when parsing dimension string '%s'" % (matched_symbol, symbol_string)
+                raise MeasurementParsingException("Unrecognized symbol '%s' when parsing dimension string '%s'" % (matched_symbol, symbol_string))
             dimension = Dimension.defined_dimensions_by_symbol[matched_symbol]
 
             powers = {"⁰": 0,
@@ -401,7 +401,7 @@ class Dimension(Immutable):
 
     def metrics(self):
         metrics = []
-        for metric in Metric.defined_metrics_by_symbol.values():
+        for metric in list(Metric.defined_metrics_by_symbol.values()):
             if metric.dimension == self:
                 metrics.append(metric)
         return metrics
@@ -446,12 +446,12 @@ class Dimension(Immutable):
             return "Dimension(" + repr(self.name) + ", " + repr(self.typographical_symbol) + ")"
         else:
             to_return = "Dimension(terms = ["
-            to_return += ", ".join(map(lambda t: repr(t), self.terms))
+            to_return += ", ".join([repr(t) for t in self.terms])
             to_return += "])"
 
             return to_return
 
-    def __str__(self):
+    def __unicode__(self):
         "Returns the typographical string representation of this Dimension."
         return self.typographical_symbol
 
@@ -490,7 +490,7 @@ class Metric(Immutable):
             if isinstance(self.power, int) and abs(self.power) in range(0, 9 + 1):
                 self.power_as_typographical_symbol = ExponentTypographicalSymbols[abs(self.power)]
             else:
-                self.power_as_typographical_symbol = "^" + str(abs(self.power))
+                self.power_as_typographical_symbol = "^" + unicode(abs(self.power))
 
             super(Metric.Term, self).__init__()
 
@@ -517,8 +517,8 @@ class Metric(Immutable):
             Produces a representation of this Metric.Term that, when eval()ed,
             will produce a Metric.Term equivalent to this one.
             """
-            return "Metric.Term(" + repr(self.prefix) + ", " + repr(self.metric) + ", " + str(self.power) + ")"
-        def __str__(self):
+            return "Metric.Term(" + repr(self.prefix) + ", " + repr(self.metric) + ", " + unicode(self.power) + ")"
+        def __unicode__(self):
             "Produces a typographical string representing this Metric.Term."
             return self.prefix.typographical_symbol + self.typographical_symbol + self.power_as_typographical_symbol
 
@@ -571,7 +571,7 @@ class Metric(Immutable):
             """
 
             if (prefix.base, prefix.power) in Metric.Prefix.defined_prefixes_by_value:
-                raise KeyError, "Multiple definitions of Metric.Prefix with base %s and power %s" % (prefix.base, prefix.power)
+                raise KeyError("Multiple definitions of Metric.Prefix with base %s and power %s" % (prefix.base, prefix.power))
 
             Metric.Prefix.defined_prefixes_by_value[(prefix.base, prefix.power)] = prefix
             Metric.Prefix.defined_prefixes_by_symbol[prefix.typographical_symbol] = prefix
@@ -663,8 +663,8 @@ class Metric(Immutable):
             Produces a representation of this Metric.Prefix that, when
             eval()ed, will produce an equivalent Metric.Prefix.
             """
-            return "Metric.Prefix(" + repr(self.name) + ", " + repr(self.typographical_symbol) + ", " + str(self.base) + ", " + str(self.power) + ")"
-        def __str__(self):
+            return "Metric.Prefix(" + repr(self.name) + ", " + repr(self.typographical_symbol) + ", " + unicode(self.base) + ", " + unicode(self.power) + ")"
+        def __unicode__(self):
             "Represents this Metric.Prefix as a typographical symbol."
             return self.typographical_symbol
 
@@ -767,7 +767,7 @@ class Metric(Immutable):
         return list(Metric.defined_metrics_by_symbol.values())
     @classmethod
     def get_by_name(cls, name):
-        for metric in Metric.defined_metrics_by_symbol.values():
+        for metric in list(Metric.defined_metrics_by_symbol.values()):
             if metric.name == name:
                 return metric
         return None
@@ -923,14 +923,14 @@ class Metric(Immutable):
 
         if len(parts) == 2:
             denominator_terms = Metric.symbol_string_to_terms(parts[1])
-            denominator_terms = map(lambda term: Metric.Term(term.prefix, term.metric, 0 - term.power), denominator_terms)
+            denominator_terms = [Metric.Term(term.prefix, term.metric, 0 - term.power) for term in denominator_terms]
         else:
             denominator_terms = []
 
         terms = numerator_terms + denominator_terms
 
         if not terms:
-          raise MeasurementParsingException, "'%s' doesn't seem to correspond to any defined Metrics" % typographical_symbol
+          raise MeasurementParsingException("'%s' doesn't seem to correspond to any defined Metrics" % typographical_symbol)
 
         return Metric(terms = terms)
 
@@ -958,7 +958,7 @@ class Metric(Immutable):
         strings first, so that matches for longer strings will occur before
         short strings, as in 'mol' and 'm'.
         """
-        metric_tokens = map(lambda typographical_symbol: re.escape(typographical_symbol), Metric.defined_metrics_by_symbol.keys())
+        metric_tokens = [re.escape(typographical_symbol) for typographical_symbol in list(Metric.defined_metrics_by_symbol.keys())]
         metric_tokens.sort(key = len, reverse = True)
 
         def resolve_conflicts_between_prefix_and_metric(prefix):
@@ -971,8 +971,7 @@ class Metric(Immutable):
             else:
                 return ""
 
-        prefix_tokens = map(lambda typographical_symbol: re.escape(typographical_symbol) + resolve_conflicts_between_prefix_and_metric(typographical_symbol),
-                            Metric.Prefix.defined_prefixes_by_symbol.keys())
+        prefix_tokens = [re.escape(typographical_symbol) + resolve_conflicts_between_prefix_and_metric(typographical_symbol) for typographical_symbol in list(Metric.Prefix.defined_prefixes_by_symbol.keys())]
         prefix_tokens.sort(key = len, reverse = True)
 
         prefix_tokens = "(" + "|".join(prefix_tokens) + "){0,1}"
@@ -1003,17 +1002,17 @@ class Metric(Immutable):
 
             if matched_prefix:
                 if not matched_prefix in Metric.Prefix.defined_prefixes_by_symbol:
-                    raise MeasurementParsingException, "Unrecognized prefix symbol '%s' when parsing metric string '%s'" % (matched_prefix, symbol_string)
+                    raise MeasurementParsingException("Unrecognized prefix symbol '%s' when parsing metric string '%s'" % (matched_prefix, symbol_string))
                 prefix = Metric.Prefix.defined_prefixes_by_symbol[matched_prefix]
             else:
                 prefix = None
 
             if matched_symbol:
                 if not matched_symbol in Metric.defined_metrics_by_symbol:
-                    raise MeasurementParsingException, "Unrecognized metric symbol '%s' when parsing metric string '%s'" % (matched_symbol, symbol_string)
+                    raise MeasurementParsingException("Unrecognized metric symbol '%s' when parsing metric string '%s'" % (matched_symbol, symbol_string))
                 metric = Metric.defined_metrics_by_symbol[matched_symbol]
             else:
-                raise MeasurementParsingException, "No metric symbol found when parsing metric string '%s'" % symbol_string
+                raise MeasurementParsingException("No metric symbol found when parsing metric string '%s'" % symbol_string)
 
             powers = {
                       "⁰": 0,
@@ -1046,9 +1045,9 @@ class Metric(Immutable):
 
 
     def numerator(self):
-        return Metric(terms = filter(lambda t: t.power > 0, self.terms))
+        return Metric(terms = [t for t in self.terms if t.power > 0])
     def denominator(self):
-        return One / Metric(terms = filter(lambda t: t.power < 0, self.terms))
+        return One / Metric(terms = [t for t in self.terms if t.power < 0])
 
 
     def __hash__(self):
@@ -1153,12 +1152,12 @@ class Metric(Immutable):
             return "Metric(" + repr(self.name) + ", " + repr(self.typographical_symbol) + ", " + repr(self.dimension) + ")"
         else:
             to_return = "Metric(terms = ["
-            to_return += ", ".join(map(lambda m: repr(m), self.terms))
+            to_return += ", ".join([repr(m) for m in self.terms])
             to_return += "])"
 
             return to_return
 
-    def __str__(self):
+    def __unicode__(self):
         "Produces the typographical symbol of this metric."
         return self.typographical_symbol
 
@@ -1217,7 +1216,7 @@ class Metric(Immutable):
                       reduced_quantity.metric.denominator() == reduced_factor.metric.numerator()):
                     return reduced_quantity * reduced_factor
                 else:
-                    raise MetricConversionError, "Quantity '%s' is not convertible with scalar conversion '%s'" % (quantity, self.scalar_factor)
+                    raise MetricConversionError("Quantity '%s' is not convertible with scalar conversion '%s'" % (quantity, self.scalar_factor))
 
     class FunctionConversion(Immutable, Conversion):
         "A Conversion which is a pair of functions (from->to and to->from) to compute on the incoming quantity."
@@ -1239,7 +1238,7 @@ class Metric(Immutable):
             elif quantity.metric == self.from_metric:
                 return self.from_function(quantity)
             else:
-                raise MetricConversionError, "Quantity '%s' is not convertible with this conversion function between %s and %s" % (quantity, self.from_metric, self.to_metric)
+                raise MetricConversionError("Quantity '%s' is not convertible with this conversion function between %s and %s" % (quantity, self.from_metric, self.to_metric))
 
     def is_convertible_to(self, other):
         """
@@ -1267,20 +1266,20 @@ class Metric(Immutable):
             return lambda q: (1 * One) * q
 
         if (self.dimension != other.dimension):
-            raise MetricConversionError, "There is no conversion between '%s' and '%s', because they measure different Dimensions." % (self, other)
+            raise MetricConversionError("There is no conversion between '%s' and '%s', because they measure different Dimensions." % (self, other))
 
         conversion = Metric.find_conversion(self, other)
         if not conversion:
-            raise MetricConversionError, "There is no conversion between '%s' and '%s'." % (self, other)
+            raise MetricConversionError("There is no conversion between '%s' and '%s'." % (self, other))
 
         return conversion
 
     @classmethod
     def _coerced_multiply(cls, left, right):
         if isinstance(left, decimal.Decimal) and isinstance(right, float):
-            return left * decimal.Decimal(str(right))
+            return left * decimal.Decimal(unicode(right))
         elif isinstance(left, float) and isinstance(right, decimal.Decimal):
-            return decimal.Decimal(str(left)) * right
+            return decimal.Decimal(unicode(left)) * right
         else:
             return left * right
 
@@ -1322,7 +1321,7 @@ class Metric(Immutable):
         # which yields m -> ft; if that didn't show up as a conversion, then it would try
         # m^2 -> ft^2
         highest_power = max(metric_to_find.terms, key = lambda t: abs(t.power)).power
-        for power in xrange(highest_power, 1, -1):
+        for power in range(highest_power, 1, -1):
             factored_metric = metric_to_find**(1/power)
             inverse_factored_metric = One / factored_metric
             if factored_metric in Metric.conversions:
@@ -1415,7 +1414,7 @@ class Quantity(Immutable):
 
         match = pattern.match(quantity_string)
         if not match:
-            raise MeasurementParsingException, "Could not parse '%s' to a Quantity." % quantity_string
+            raise MeasurementParsingException("Could not parse '%s' to a Quantity." % quantity_string)
 
         components = match.groupdict()
 
@@ -1428,7 +1427,7 @@ class Quantity(Immutable):
             else:
                 if not magnitude.count("."):
                     if len(magnitude) > 18: # not definitive, but a good guess
-                        to = long
+                        to = int
                     else:
                         to = int
                 else:
@@ -1452,7 +1451,7 @@ class Quantity(Immutable):
         "Creates a new Quantity with the given magnitude and metric."
         self.magnitude = magnitude
 
-        if isinstance(metric, (str, unicode)):
+        if isinstance(metric, str):
             self.metric = Metric.parse(metric)
         else:
             self.metric = metric
@@ -1476,14 +1475,14 @@ class Quantity(Immutable):
         "Computes the hash value for this Quantity."
         return hash(self.metric) ^ hash(self.magnitude)
 
-    def __nonzero__(self):
+    def __bool__(self):
         "Tests whether this Quantity is non-zero."
         return self.magnitude.__nonzero__()
 
     def _coerce_magnitude(self, other):
         if isinstance(other, Quantity):
             if isinstance(self.magnitude, decimal.Decimal) and isinstance(other.magnitude, float):
-                return Quantity(decimal.Decimal(str(other.magnitude)), other.metric)
+                return Quantity(decimal.Decimal(unicode(other.magnitude)), other.metric)
             elif isinstance(self.magnitude, float) and isinstance(other.magnitude, decimal.Decimal):
                 return Quantity(float(other.magnitude), other.metric)
             else:
@@ -1659,17 +1658,17 @@ class Quantity(Immutable):
         produces an equivalent Quantity.
         """
         return "Quantity(" + repr(self.magnitude) + ", " + repr(self.metric) + ")"
-    def __str__(self):
+    def __unicode__(self):
         """
         Produces a string representation of this Quantity in numbers and
         typographical symbols.
         """
         if self.metric == One:
-            return str(self.magnitude)
+            return unicode(self.magnitude)
         elif self.metric == Ten:
-            return str(10 * self.magnitude)
+            return unicode(10 * self.magnitude)
         else:
-            return str(self.magnitude) + " " + str(self.metric)
+            return unicode(self.magnitude) + " " + unicode(self.metric)
 
 class Constant(Quantity):
 
@@ -2007,16 +2006,13 @@ def calculate(script):
 
 
     # step zero.a: make the metric patterns
-    metric_tokens = map(lambda metric: re.escape(metric.name),
-                        Metric.defined_metrics_by_symbol.values())
+    metric_tokens = [re.escape(metric.name) for metric in list(Metric.defined_metrics_by_symbol.values())]
     metric_tokens.sort(key = len, reverse = True)
 
-    plural_tokens = map(lambda metric: re.escape(metric.plural_name),
-                        Metric.defined_metrics_by_symbol.values())
+    plural_tokens = [re.escape(metric.plural_name) for metric in list(Metric.defined_metrics_by_symbol.values())]
     plural_tokens.sort(key = len, reverse = True)
 
-    prefix_tokens = map(lambda prefix: re.escape(prefix.name),
-                        Metric.Prefix.defined_prefixes_by_symbol.values())
+    prefix_tokens = [re.escape(prefix.name) for prefix in list(Metric.Prefix.defined_prefixes_by_symbol.values())]
     prefix_tokens.sort(key = len, reverse = True)
 
     metric_tokens = "(" + "|".join(metric_tokens) + "){1}"
@@ -2044,21 +2040,21 @@ def calculate(script):
 
             found_prefix = None
             if full_prefix:
-                for prefix in Metric.Prefix.defined_prefixes.values():
+                for prefix in list(Metric.Prefix.defined_prefixes.values()):
                     if prefix.name == full_prefix:
                         found_prefix = prefix
                         break
                 if not found_prefix:
-                    raise MeasurementParsingException, "Could not find Metric Prefix '%s'." % found_prefix
+                    raise MeasurementParsingException("Could not find Metric Prefix '%s'." % found_prefix)
 
             found_metric = None
-            for metric in Metric.defined_metrics_by_symbol.values():
+            for metric in list(Metric.defined_metrics_by_symbol.values()):
                 if metric.plural_name == plural_metric:
                     found_metric = metric
                     break
 
             if not found_metric:
-                raise MeasurementParsingException, "Could not find Metric '%s'." % plural_metric
+                raise MeasurementParsingException("Could not find Metric '%s'." % plural_metric)
 
             if found_prefix:
                 found_metric = found_prefix * found_metric
@@ -2072,21 +2068,21 @@ def calculate(script):
 
             found_prefix = None
             if full_prefix:
-                for prefix in Metric.Prefix.defined_prefixes_by_symbol.values():
+                for prefix in list(Metric.Prefix.defined_prefixes_by_symbol.values()):
                     if prefix.name == full_prefix:
                         found_prefix = prefix
                         break
                 if not found_prefix:
-                    raise MeasurementParsingException, "Could not find Metric Prefix '%s'." % found_prefix
+                    raise MeasurementParsingException("Could not find Metric Prefix '%s'." % found_prefix)
 
             found_metric = None
-            for metric in Metric.defined_metrics_by_symbol.values():
+            for metric in list(Metric.defined_metrics_by_symbol.values()):
                 if metric.name == full_metric:
                     found_metric = metric
                     break
 
             if not found_metric:
-                raise MeasurementParsingException, "Could not find Metric '%s'." % full_metric
+                raise MeasurementParsingException("Could not find Metric '%s'." % full_metric)
 
             if found_prefix:
                 found_metric = found_prefix * found_metric
@@ -2129,15 +2125,10 @@ def calculate(script):
 
     python_code = "\n".join(preparedlines)
 
-    exec python_code in safe_globals, safe_locals
+    exec(python_code, safe_globals, safe_locals)
 
     # step six: evaluate the return value
     if "____return_value____" in safe_locals:
         return safe_locals["____return_value____"]
     else:
         return None
-
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()

@@ -4,6 +4,8 @@ United States customary units of measurement.
 http://en.wikipedia.org/wiki/United_States_customary_units
 """
 
+from __future__ import division, unicode_literals
+
 import measurement
 
 ### Length ###

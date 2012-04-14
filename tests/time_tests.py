@@ -1,11 +1,13 @@
 # coding=utf-8
 
+from __future__ import division, unicode_literals
+
 import unittest
 
 from measurement import *
 
-import arithmetic
-import string_representations
+from . import arithmetic
+from . import string_representations
 
 class TimeMeasurementsTestCase(unittest.TestCase):
     """
@@ -26,9 +28,9 @@ class TimeMeasurementsTestCase(unittest.TestCase):
     def tearDown(self):
         arithmetic.axioms.expectations = None
         arithmetic.axioms.multiplicative_identity = None
-        arithmetic.axioms.fake_value = None 
+        arithmetic.axioms.fake_value = None
         arithmetic.axioms.another_fake_value = None
-        
+
     def testTimeRegistrations(self):
         assert Minute != None
         assert Minute.name == "minute", Minute.name
@@ -64,7 +66,7 @@ class TimeMeasurementsTestCase(unittest.TestCase):
         assert Year.dimension == Time, Year.dimension
         arithmetic.axioms.hold_for(Year)
         string_representations.should_represent_orthogonally(Year)
-        
+
 
     def testTimeConversions(self):
         arithmetic.assert_close(1 * Minute, 60 * Second)

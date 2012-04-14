@@ -1,11 +1,12 @@
 #coding=utf-8
-from __future__ import division
+
+from __future__ import division, unicode_literals
 
 import unittest
 
 from measurement import *
 
-import arithmetic
+from . import arithmetic
 
 class ConstantTestCase(unittest.TestCase):
 

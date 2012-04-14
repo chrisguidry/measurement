@@ -1,15 +1,18 @@
 #coding=utf-8
+
+from __future__ import division, unicode_literals
+
 import unittest
 
 from measurement import *
 from measurement.currencies import *
 
-import arithmetic
-import string_representations
+from . import arithmetic
+from . import string_representations
 
 class CurrenciesTestCase(unittest.TestCase):
     "Tests the currency metrics. "
-    
+
     def setUp(self):
         arithmetic.axioms.expectations = {
                                             "commutative": False,
@@ -23,9 +26,9 @@ class CurrenciesTestCase(unittest.TestCase):
     def tearDown(self):
         arithmetic.axioms.expectations = None
         arithmetic.axioms.multiplicative_identity = None
-        arithmetic.axioms.fake_value = None 
+        arithmetic.axioms.fake_value = None
         arithmetic.axioms.another_fake_value = None
-        
+
     def testCurrencyRegistrations(self):
         assert UnitedStatesDollar != None
         assert UnitedStatesDollar.name == "United States Dollar", UnitedStatesDollar.name
@@ -33,7 +36,7 @@ class CurrenciesTestCase(unittest.TestCase):
         assert UnitedStatesDollar.dimension == Exchange, UnitedStatesDollar.dimension
         arithmetic.axioms.hold_for(UnitedStatesDollar)
         string_representations.should_represent_orthogonally(UnitedStatesDollar)
-        
+
         assert Euro != None
         assert Euro.name == "Euro", Euro.name
         assert Euro.typographical_symbol == "EUR", Euro.typographical_symbol

@@ -1,12 +1,14 @@
 # coding=utf-8
 
+from __future__ import division, unicode_literals
+
 import unittest
 
 from measurement import *
 from measurement.astronomical import *
 
-import arithmetic
-import string_representations
+from . import arithmetic
+from . import string_representations
 
 class AstronomicalMeasurementsTestCase(unittest.TestCase):
     """

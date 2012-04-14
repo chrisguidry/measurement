@@ -4,6 +4,8 @@ Units of measurement used in Astronomy
 http://en.wikipedia.org/wiki/Category:Units_of_length_in_astronomy
 """
 
+from __future__ import division, unicode_literals
+
 import measurement
 
 # Time

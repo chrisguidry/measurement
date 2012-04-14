@@ -1,4 +1,7 @@
 #coding=utf-8
+
+from __future__ import division, unicode_literals
+
 import unittest
 
 from measurement import *
@@ -11,7 +14,7 @@ class ScriptTestCase(unittest.TestCase):
     def testSafetyOfCalculateFromImporting(self):
         try:
             result = calculate("import sys\nsys.path")
-        except ImportError, e:
+        except ImportError as e:
             assert str(e) == "__import__ not found", str(e)
         else:
             assert False, "It should not be possible to import packages in a calculation script."
@@ -19,7 +22,7 @@ class ScriptTestCase(unittest.TestCase):
     def testSafetyOfCalculateFromBuiltins(self):
         try:
             result = calculate("dir()")
-        except NameError, e:
+        except NameError as e:
             assert str(e) == "name 'dir' is not defined", str(e)
         else:
             assert False, "It should not be possible to call built-ins, like dir()."
@@ -106,7 +109,7 @@ class ScriptTestCase(unittest.TestCase):
 
         result = calculate("2 meter²")
         assert result == 2 * Meter**2
-        
+
         result = calculate("2 m^2")
         assert result == 2 * Meter**2
 
@@ -116,9 +119,9 @@ class ScriptTestCase(unittest.TestCase):
     def testNegativePower(self):
         result = calculate("2 m⁻²")
         assert result == 2 * Meter**-2
- 
+
         result = calculate("2 meter⁻²")
-        assert result == 2 * Meter**-2       
+        assert result == 2 * Meter**-2
 
         result = calculate("2 m^-2")
         assert result == 2 * Meter**-2
@@ -151,7 +154,7 @@ class ScriptTestCase(unittest.TestCase):
         assert result == True, result
         result = calculate("12 V / 2 A > 3 Ω")
         assert result == True, result
-    
+
     def testLessThan(self):
         result = calculate("12 volts / 2 A < 6 ohms")
         assert result == False, result
