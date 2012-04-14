@@ -1,0 +1,5 @@
+The Measurement Library is a set of classes offering full support for
+math using Dimensions, Metrics, and Quantities.
+
+Please see the test suite and the doctests for examples. Currently tested in
+Python 2.6 and 2.7, with Python 3 support coming soon.
