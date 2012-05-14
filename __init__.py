@@ -6,6 +6,7 @@ math using Dimensions, Metrics, and Quantities.
 """
 
 from __future__ import division, unicode_literals
+import six
 
 import decimal
 import math
@@ -111,7 +112,7 @@ class Dimension(Immutable):
             if isinstance(self.power, int) and abs(self.power) in range(0, 9 + 1):
                 self.power_as_typographical_symbol = ExponentTypographicalSymbols[abs(self.power)]
             else:
-                self.power_as_typographical_symbol = "^" + unicode(abs(self.power))
+                self.power_as_typographical_symbol = "^" + six.text_type(abs(self.power))
 
             super(Dimension.Term, self).__init__()
 
@@ -135,7 +136,7 @@ class Dimension(Immutable):
         def __repr__(self):
             "Produces a representation of this Dimension.Term, that when eval()ed, produces a Dimension.Term "
             "equivalent to this one."
-            return "Dimension.Term(" + repr(self.dimension) + ", " + unicode(self.power) + ")"
+            return "Dimension.Term(" + repr(self.dimension) + ", " + six.text_type(self.power) + ")"
         def __unicode__(self):
             "Produces a string representation of this Dimension.Term, in typographical symbols"
             return self.typographical_symbol + self.power_as_typographical_symbol
@@ -350,7 +351,7 @@ class Dimension(Immutable):
         # the typographical symbols should be sorted by length, with the longest strings first, so that
         # matches for longer strings will occur before short strings, as in 'mol' and 'm'
         dimension_tokens = [re.escape(typographical_symbol) for typographical_symbol in list(Dimension.defined_dimensions_by_symbol.keys())]
-        dimension_tokens.sort(lambda left, right: 0 - cmp(len(left), len(right)))
+        dimension_tokens.sort(key = len, reverse = True)
         dimension_tokens = "(" + "|".join(dimension_tokens) + ")"
 
         power_tokens = "(⁰|⁻¹|⁻²|²|⁻³|³|⁻⁴|⁴|⁻⁵|⁵|⁻⁶|⁶|⁻⁷|⁷|⁻⁸|⁸|⁻⁹|⁹|\\^[\\-\\.\\d]+){0,1}"
@@ -490,7 +491,7 @@ class Metric(Immutable):
             if isinstance(self.power, int) and abs(self.power) in range(0, 9 + 1):
                 self.power_as_typographical_symbol = ExponentTypographicalSymbols[abs(self.power)]
             else:
-                self.power_as_typographical_symbol = "^" + unicode(abs(self.power))
+                self.power_as_typographical_symbol = "^" + six.text_type(abs(self.power))
 
             super(Metric.Term, self).__init__()
 
@@ -517,7 +518,7 @@ class Metric(Immutable):
             Produces a representation of this Metric.Term that, when eval()ed,
             will produce a Metric.Term equivalent to this one.
             """
-            return "Metric.Term(" + repr(self.prefix) + ", " + repr(self.metric) + ", " + unicode(self.power) + ")"
+            return "Metric.Term(" + repr(self.prefix) + ", " + repr(self.metric) + ", " + six.text_type(self.power) + ")"
         def __unicode__(self):
             "Produces a typographical string representing this Metric.Term."
             return self.prefix.typographical_symbol + self.typographical_symbol + self.power_as_typographical_symbol
@@ -663,7 +664,7 @@ class Metric(Immutable):
             Produces a representation of this Metric.Prefix that, when
             eval()ed, will produce an equivalent Metric.Prefix.
             """
-            return "Metric.Prefix(" + repr(self.name) + ", " + repr(self.typographical_symbol) + ", " + unicode(self.base) + ", " + unicode(self.power) + ")"
+            return "Metric.Prefix(" + repr(self.name) + ", " + repr(self.typographical_symbol) + ", " + six.text_type(self.base) + ", " + six.text_type(self.power) + ")"
         def __unicode__(self):
             "Represents this Metric.Prefix as a typographical symbol."
             return self.typographical_symbol
@@ -1277,9 +1278,9 @@ class Metric(Immutable):
     @classmethod
     def _coerced_multiply(cls, left, right):
         if isinstance(left, decimal.Decimal) and isinstance(right, float):
-            return left * decimal.Decimal(unicode(right))
+            return left * decimal.Decimal(six.text_type(right))
         elif isinstance(left, float) and isinstance(right, decimal.Decimal):
-            return decimal.Decimal(unicode(left)) * right
+            return decimal.Decimal(six.text_type(left)) * right
         else:
             return left * right
 
@@ -1482,7 +1483,7 @@ class Quantity(Immutable):
     def _coerce_magnitude(self, other):
         if isinstance(other, Quantity):
             if isinstance(self.magnitude, decimal.Decimal) and isinstance(other.magnitude, float):
-                return Quantity(decimal.Decimal(unicode(other.magnitude)), other.metric)
+                return Quantity(decimal.Decimal(six.text_type(other.magnitude)), other.metric)
             elif isinstance(self.magnitude, float) and isinstance(other.magnitude, decimal.Decimal):
                 return Quantity(float(other.magnitude), other.metric)
             else:
@@ -1664,11 +1665,11 @@ class Quantity(Immutable):
         typographical symbols.
         """
         if self.metric == One:
-            return unicode(self.magnitude)
+            return six.text_type(self.magnitude)
         elif self.metric == Ten:
-            return unicode(10 * self.magnitude)
+            return six.text_type(10 * self.magnitude)
         else:
-            return unicode(self.magnitude) + " " + unicode(self.metric)
+            return six.text_type(self.magnitude) + " " + six.text_type(self.metric)
 
 class Constant(Quantity):
 

@@ -38,21 +38,21 @@ class QuantityTestCase(unittest.TestCase):
         try:
             five_meters.magnitude = 10
         except AttributeError as e:
-            assert unicode(e) == "Quantity is immutable."
+            assert six.text_type(e) == "Quantity is immutable."
         else:
             assert False, "Quantity should be immutable"
 
         try:
             five_meters.metric = Candela
         except AttributeError as e:
-            assert unicode(e) == "Quantity is immutable."
+            assert six.text_type(e) == "Quantity is immutable."
         else:
             assert False, "Quantity should be immutable"
 
         try:
             del five_meters.metric
         except AttributeError as e:
-            assert unicode(e) == "Quantity is immutable."
+            assert six.text_type(e) == "Quantity is immutable."
         else:
             assert False, "Quantity should be immutable"
 
@@ -156,7 +156,7 @@ class QuantityTestCase(unittest.TestCase):
         try:
             Quantity.parse("foobar")
         except MeasurementParsingException as e:
-            assert unicode(e) == "Could not parse 'foobar' to a Quantity.", unicode(e)
+            assert six.text_type(e) == "Could not parse 'foobar' to a Quantity.", six.text_type(e)
         else:
             assert False, "Parsing nonsense should have thrown"
 
@@ -182,7 +182,7 @@ class QuantityTestCase(unittest.TestCase):
         string_representations.should_represent_orthogonally(Quantity(4, Meter))
         string_representations.should_represent_orthogonally(Quantity(5, Meter / Second))
         string_representations.should_represent_orthogonally(Quantity(6, Ohm))
-        assert unicode(10 * Ten) == "100", unicode(10 * Ten)
+        assert six.text_type(10 * Ten) == "100", six.text_type(10 * Ten)
 
     def testArithmeticAxiomsOverLongs(self):
         arithmetic.axioms.additive_identity = Quantity(int(0), One)

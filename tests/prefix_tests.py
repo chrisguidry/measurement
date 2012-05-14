@@ -37,7 +37,7 @@ class SIPrefixTestCase(unittest.TestCase):
         try:
             Metric.Prefix.define(Metric.Prefix("FOO", "BAR", 10, 3))
         except KeyError as e:
-            self.assertEqual(e.message, "Multiple definitions of Metric.Prefix with base 10 and power 3")
+            self.assertEqual(six.text_type(e), repr("Multiple definitions of Metric.Prefix with base 10 and power 3"))
         else:
             assert False, "Metric.Prefix.define should have thrown an exception re-defining a prefix."
 
@@ -45,7 +45,7 @@ class SIPrefixTestCase(unittest.TestCase):
         try:
             Kilo * 10
         except Exception as e:
-            assert unicode(e) == "unsupported operand type(s) for *: 'Prefix' and 'int'", unicode(e)
+            assert six.text_type(e) == "unsupported operand type(s) for *: 'Prefix' and 'int'", six.text_type(e)
         else:
             assert False, "Metric.Prefix.register should have thrown an exception re-registering a prefix."
 

@@ -1,6 +1,7 @@
 #coding=utf-8
 
 from __future__ import division, unicode_literals
+import six
 
 import unittest
 
@@ -19,7 +20,7 @@ class DimensionTestCase(unittest.TestCase):
         try:
             Meter.to(Fahrenheit)
         except MetricConversionError as e:
-            assert unicode(e) == "There is no conversion between 'm' and '°F', because they measure different Dimensions.", unicode(e)
+            assert six.text_type(e) == "There is no conversion between 'm' and '°F', because they measure different Dimensions.", six.text_type(e)
         else:
             assert False, "There shouldn't be a conversion between meter and Fahrenheit."
 
@@ -33,14 +34,14 @@ class DimensionTestCase(unittest.TestCase):
         try:
             Meter.to(Inch)(1 * Foot)
         except MetricConversionError as e:
-            assert unicode(e) == "Quantity '1 '' is not convertible with scalar conversion '0.0254 m/\"'", unicode(e)
+            assert six.text_type(e) == "Quantity '1 '' is not convertible with scalar conversion '0.0254 m/\"'", six.text_type(e)
         else:
             assert False, "Passing the wrong value should have thrown an error."
 
         try:
             Rankine.to(Celsius)(1 * Foot)
         except MetricConversionError as e:
-            assert unicode(e) == "Quantity '1 '' is not convertible with this conversion function between °R and °C", unicode(e)
+            assert six.text_type(e) == "Quantity '1 '' is not convertible with this conversion function between °R and °C", six.text_type(e)
         else:
             assert False, "Passing the wrong value should have thrown an error."
 

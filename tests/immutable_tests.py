@@ -1,6 +1,7 @@
 #coding=utf-8
 
 from __future__ import division, unicode_literals
+import six
 
 import unittest
 
@@ -19,7 +20,7 @@ class ImmutableTests(unittest.TestCase):
             f.value = "y"
             self.assertTrue(False, "The exception wasn't thrown.")
         except AttributeError as e:
-            self.assertEqual(e.message, "Frigid is immutable.")
+            self.assertEqual(six.text_type(e), "Frigid is immutable.")
 
     def test_delattr(self):
         f = ImmutableTests.Frigid()
@@ -34,4 +35,4 @@ class ImmutableTests(unittest.TestCase):
             del(f.value)
             self.assertTrue(False, "The exception wasn't thrown.")
         except AttributeError as e:
-            self.assertEqual(e.message, "Frigid is immutable.")
+            self.assertEqual(six.text_type(e), "Frigid is immutable.")
