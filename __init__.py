@@ -19,20 +19,24 @@ class MeasurementParsingException(Exception):
     An exception that occurs while parsing a Dimension, Metric, or Quantity
     from a string.
 
-    >>> Quantity.parse("ThisIsn'tAQuantity!")
-    Traceback (most recent call last):
-      ...
-    MeasurementParsingException: Could not parse 'ThisIsn'tAQuantity!' to a Quantity.
+    >>> assert "Python 2 and Python 3 doctests are incompatible."
+    >>> try:
+    ...     Quantity.parse("ThisIsn'tAQuantity!")
+    ...     assert False, "MeasurementParsingException was not raised!"
+    ... except MeasurementParsingException as e:
+    ...     assert str(e) == "Could not parse 'ThisIsn'tAQuantity!' to a Quantity."
     """
 class MetricConversionError(Exception):
     """
     An exception raised when a conversion between Metrics is required and
     there is no defined conversion.
 
-    >>> (5 * Ampere).to(Meter)
-    Traceback (most recent call last):
-      ...
-    MetricConversionError: There is no conversion between 'A' and 'm', because they measure different Dimensions.
+    >>> assert "Python 2 and Python 3 doctests are incompatible."
+    >>> try:
+    ...     (5 * Ampere).to(Meter)
+    ...     assert False, "MetricConversionError was not raised!"
+    ... except MetricConversionError as e:
+    ...     assert str(e) == "There is no conversion between 'A' and 'm', because they measure different Dimensions."
     """
 
 def isnumber(object):
@@ -140,6 +144,7 @@ class Dimension(Immutable):
         def __unicode__(self):
             "Produces a string representation of this Dimension.Term, in typographical symbols"
             return self.typographical_symbol + self.power_as_typographical_symbol
+        __str__ = __unicode__
 
     def __new__(cls, *args, **kwargs):
         """
@@ -455,6 +460,7 @@ class Dimension(Immutable):
     def __unicode__(self):
         "Returns the typographical string representation of this Dimension."
         return self.typographical_symbol
+    __str__ = __unicode__
 
 class Metric(Immutable):
     "A Metric is a unit of measurement in some Dimension."
@@ -522,6 +528,7 @@ class Metric(Immutable):
         def __unicode__(self):
             "Produces a typographical string representing this Metric.Term."
             return self.prefix.typographical_symbol + self.typographical_symbol + self.power_as_typographical_symbol
+        __str__ = __unicode__
 
     class Prefix(Immutable):
         """
@@ -668,6 +675,7 @@ class Metric(Immutable):
         def __unicode__(self):
             "Represents this Metric.Prefix as a typographical symbol."
             return self.typographical_symbol
+        __str__ = __unicode__
 
     def __new__(cls, *args, **kwargs):
         """
@@ -1161,7 +1169,7 @@ class Metric(Immutable):
     def __unicode__(self):
         "Produces the typographical symbol of this metric."
         return self.typographical_symbol
-
+    __str__ = __unicode__
 
 
 
@@ -1670,6 +1678,7 @@ class Quantity(Immutable):
             return six.text_type(10 * self.magnitude)
         else:
             return six.text_type(self.magnitude) + " " + six.text_type(self.metric)
+    __str__ = __unicode__
 
 class Constant(Quantity):
 
