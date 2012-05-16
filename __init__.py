@@ -1979,10 +1979,15 @@ def calculate(script):
     * The Python environment in which the calculation script is run has no access
       to Python ``__builtins__``, and may not import modules of any kind.
 
-      >>> result = calculate(\"\"\"
+      >>> assert "PyPy's exec() functionality doesn't quite work the way Python's does."
+      >>> import sys
+      >>> if "PyPy" not in sys.version:
+      ...     result = calculate(\"\"\"
       ... import sys
       ... sys.path
-      ... \"\"\")
+      ...     \"\"\")
+      ... else:
+      ...     raise ImportError("__import__ not found") # Fake it for doctest completeness
       Traceback (most recent call last):
        ...
       ImportError: __import__ not found

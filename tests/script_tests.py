@@ -3,6 +3,7 @@
 from __future__ import division, unicode_literals
 
 import unittest
+import sys
 
 from measurement import *
 from measurement.astronomical import *
@@ -11,17 +12,21 @@ from measurement.united_states_customary import *
 class ScriptTestCase(unittest.TestCase):
     "Tests support for calculation scripts."
 
+    @unittest.skipIf("PyPy" in sys.version,
+                     "Semi-safe calculation scripts are NOT supported under PyPy yet.")
     def testSafetyOfCalculateFromImporting(self):
         try:
-            result = calculate("import sys\nsys.path")
+            calculate("import sys\nsys.path")
         except ImportError as e:
             assert str(e) == "__import__ not found", str(e)
         else:
             assert False, "It should not be possible to import packages in a calculation script."
 
+    @unittest.skipIf("PyPy" in sys.version,
+                     "Semi-safe calculation scripts are NOT supported under PyPy yet.")
     def testSafetyOfCalculateFromBuiltins(self):
         try:
-            result = calculate("dir()")
+            calculate("dir()")
         except NameError as e:
             assert str(e) == "name 'dir' is not defined", str(e)
         else:
