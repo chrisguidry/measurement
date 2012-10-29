@@ -10,6 +10,11 @@ from . import arithmetic
 
 class ConstantTestCase(unittest.TestCase):
 
+    def testRegistration(self):
+        assert AbsoluteZero in Constant.all()
+        assert Constant.get_by_name("absolute zero") == AbsoluteZero
+        assert Constant.get_by_name("Guidry's Constant") == None
+
     def testEulersFormula(self):
         "Euler's formula, our \"jewel\", states that e^(i*pi) + 1 = 0"
         arithmetic.assert_close(EulersNumber**(ImaginaryUnit*Pi) + Unity, Zero)

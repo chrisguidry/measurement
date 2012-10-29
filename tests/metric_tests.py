@@ -265,6 +265,10 @@ class MetricTestCase(unittest.TestCase):
         assert Ten != 10.000000000000001
         assert 10.000000000000001 != Ten
 
+    def testInequality(self):
+        assert not (Meter == 2)
+        assert Meter != 2
+
     def testRegistration(self):
         assert Meter in Metric.all()
         assert Meter == Metric.get_by_name("meter")

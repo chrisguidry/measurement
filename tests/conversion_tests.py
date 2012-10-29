@@ -30,6 +30,16 @@ class DimensionTestCase(unittest.TestCase):
         assert Meter.is_convertible_to(Meter)
         assert Meter.to(Meter)(1 * Meter) == 1 * Meter
 
+    def testMissingConversionsInSameDimension(self):
+        FakeLength = Metric("faken", "f", Length)
+        assert not Meter.is_convertible_to(FakeLength)
+        try:
+            Meter.to(FakeLength)
+        except MetricConversionError as e:
+            assert six.text_type(e) == "There is no conversion between 'm' and 'f'.", six.text_type(e)
+        else:
+            assert False, "Trying to convert between meter and faken should have failed."
+
     def testErrorsPassingTheWrongValuesToConversionFunctions(self):
         try:
             Meter.to(Inch)(1 * Foot)

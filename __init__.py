@@ -1079,7 +1079,7 @@ class Metric(Immutable):
         elif isnumber(other):
             if self == One:
                 return other == 1
-            if self == Ten:
+            elif self == Ten:
                 return other == 10
             else:
                 return NotImplemented
@@ -1106,9 +1106,7 @@ class Metric(Immutable):
         return NotImplemented
     def __rmul__(self, other):
         "When multiplying Metrics, derives a new metric through multiplication.  When multiplying by numbers, produces a Quantity in this Metric."
-        if isinstance(other, Metric):
-            return Metric(terms = [Metric.Term(None, self, 1), Metric.Term(None, other, 1)])
-        elif isnumber(other):
+        if isnumber(other):
             return Quantity(other, self)
         return NotImplemented
 
@@ -1125,9 +1123,7 @@ class Metric(Immutable):
         return NotImplemented
     def __rtruediv__(self, other):
         "When dividing Metrics, derives a new metric through division.  When dividing by numbers, produces a Quantity in this Metric."
-        if isinstance(other, Metric):
-            return Metric(terms = [Metric.Term(None, self, 1), Metric.Term(None, other, -1)])
-        elif isnumber(other):
+        if isnumber(other):
             return Quantity(other, One / self)
         return NotImplemented
     __div__ = __truediv__
@@ -1186,12 +1182,7 @@ class Metric(Immutable):
 
         def applies_to(self, metric):
             "Determines whether this conversion could apply to the metric in question."
-            return (self.metric == metric or
-                    self.metric == (One / metric))
-
-        def __call__(self, quantity):
-            "Performs the conversion of quantity to the desired metric."
-            raise NotImplementedError
+            return (self.metric == metric or self.metric == (One / metric))
 
     class ScalarConversion(Immutable, Conversion):
         "A Conversion which is simply a multiplication or division by a scalar value."
@@ -1348,6 +1339,13 @@ class Metric(Immutable):
         si_conversion = 1 * One
         for term in metric_to_find.terms:
             si_metric = Metric.base_metric_of[term.metric.dimension]
+
+            if si_metric == from_metric or si_metric == to_metric:
+                # Prevent infinite recursion.  If we just end up
+                # trying to find the same conversions we were asked for,
+                # bail early.
+                return None
+
             term_conversion = term.metric.to(si_metric)
             if term.power > 0:
                 si_conversion *= term_conversion(1 * term.metric)
@@ -1461,7 +1459,7 @@ class Quantity(Immutable):
         "Creates a new Quantity with the given magnitude and metric."
         self.magnitude = magnitude
 
-        if isinstance(metric, str):
+        if isinstance(metric, six.text_type):
             self.metric = Metric.parse(metric)
         else:
             self.metric = metric
@@ -1487,7 +1485,8 @@ class Quantity(Immutable):
 
     def __bool__(self):
         "Tests whether this Quantity is non-zero."
-        return self.magnitude.__nonzero__()
+        return bool(self.magnitude)
+    __nonzero__ = __bool__
 
     def _coerce_magnitude(self, other):
         if isinstance(other, Quantity):
@@ -1630,7 +1629,8 @@ class Quantity(Immutable):
         if isinstance(other, Quantity):
             return Quantity(self.magnitude * other.magnitude, self.metric * other.metric)
         return NotImplemented
-    def __div__(self, other):
+
+    def __floordiv__(self, other):
         "Divides (using 'floor division') two Quantities."
         other = self._coerce_magnitude(other)
 
@@ -1644,6 +1644,7 @@ class Quantity(Immutable):
         if isinstance(other, Quantity):
             return Quantity(self.magnitude / other.magnitude, self.metric / other.metric)
         return NotImplemented
+
     def __pow__(self, power):
         "Raises this Quantity (both magnitude and metric) to the given power."
         if isinstance(power, Quantity) and power.metric == One:
@@ -1684,10 +1685,6 @@ class Quantity(Immutable):
 class Constant(Quantity):
 
     def __init__(self, magnitude, metric, name, typographical_symbol = None):
-
-        if hasattr(self, "frozen"):
-            return
-
         self.name = name
         self.typographical_symbol = typographical_symbol
         if not self.typographical_symbol:
@@ -1930,221 +1927,3 @@ ElementaryCharge = Constant(1.602176487e-19, Coulomb, "elementary charge", "e")
 GravitationalConstant = Constant(667428000000.0, Meter**3 / ((Kilo*Gram) * Second**2),
                                  "gravitational constant", "G")
 SpeedOfLight = Constant(299792458, Meter / Second, "speed of light", "c")
-
-
-
-
-
-### Calculation Script Support ###
-def calculate(script):
-    """
-    Evaluates a calculation script.  Calculation scripts are a limited subset
-    of Python, with the following augmented rules:
-
-    * Quantities may be represented in their string forms, such as '12 V' for
-      ``Quantity(12, Volt)``.
-
-      >>> result = calculate("12 V")
-      >>> result == 12 * Volt
-      True
-      >>> result = calculate("12 m/s")
-      >>> result == 12 * (Meter / Second)
-      True
-
-    * The plural names of Metrics are allowed, so all of the following are
-      considered the same: '12 V', '12 volt', '12 volts'.
-
-      >>> calculate("12 volt") == calculate("12 volt") == calculate("12 V")
-      True
-
-    * Besides preprocessing Quantities and Metrics, all of the normal Python
-      syntax applies, especially variables and the arithmetic and comparison
-      operators.
-
-      >>> result = calculate(\"\"\"
-      ... v = 12 V
-      ... i = 4 A
-      ... v / i
-      ... \"\"\")
-      >>> result == 3 * Ohm
-      True
-      >>> result = calculate(\"\"\"
-      ... v = 12 V
-      ... i = 4 A
-      ... r = 3 ohm
-      ... v == i * r
-      ... \"\"\")
-      >>> result == True
-      True
-
-    * The Python environment in which the calculation script is run has no access
-      to Python ``__builtins__``, and may not import modules of any kind.
-
-      >>> assert "PyPy's exec() functionality doesn't quite work the way Python's does."
-      >>> import sys
-      >>> if "PyPy" not in sys.version:
-      ...     result = calculate(\"\"\"
-      ... import sys
-      ... sys.path
-      ...     \"\"\")
-      ... else:
-      ...     raise ImportError("__import__ not found") # Fake it for doctest completeness
-      Traceback (most recent call last):
-       ...
-      ImportError: __import__ not found
-
-    * The last line of the script is evaluated as the return value of the script,
-      and may be any valid Python expression or Quantity expression.  If you need
-      to return multiple values, pack them in a ``tuple`` or ``dict``  on the
-      last line of your script.
-
-      >>> result = calculate(\"\"\"
-      ... v = 12 V
-      ... i = 4 A
-      ... { "resistance": v / i, "power" : v * i }
-      ... \"\"\")
-      >>> result["resistance"] == 3 * Ohm
-      True
-      >>> result["power"] == 48 * Watt
-      True
-
-    """
-
-    if not Metric.parsing_pattern_string:
-        Metric.rebuild_parsing_pattern()
-
-    scriptlines = script.splitlines()
-
-    if not scriptlines:
-        return None
-
-    preparedlines = []
-
-
-    # step zero.a: make the metric patterns
-    metric_tokens = [re.escape(metric.name) for metric in list(Metric.defined_metrics_by_symbol.values())]
-    metric_tokens.sort(key = len, reverse = True)
-
-    plural_tokens = [re.escape(metric.plural_name) for metric in list(Metric.defined_metrics_by_symbol.values())]
-    plural_tokens.sort(key = len, reverse = True)
-
-    prefix_tokens = [re.escape(prefix.name) for prefix in list(Metric.Prefix.defined_prefixes_by_symbol.values())]
-    prefix_tokens.sort(key = len, reverse = True)
-
-    metric_tokens = "(" + "|".join(metric_tokens) + "){1}"
-    plural_tokens = "(" + "|".join(plural_tokens) + "){1}"
-    prefix_tokens = "(" + "|".join(prefix_tokens) + "){0,1}"
-
-    full_metric_name_pattern = re.compile(prefix_tokens + metric_tokens)
-    plural_pattern = re.compile(prefix_tokens + plural_tokens)
-
-
-    # step zero.b: make the quantity patterns
-    magnitude_pattern = r"(\(?\-?[\d]+\.?[\d]?)[\+\-]([\d]+\.?[\d]?)j\)?)|(\-?[\d]+\.?[\d]*)"
-    metric_pattern = r"((" + Metric.parsing_pattern_string + ")+?)+(/((" + Metric.parsing_pattern_string + ")+?)+)?"
-
-    quantity_pattern_string = r"(?P<magnitude>(" + magnitude_pattern  + ")\s?(?P<metric>" + metric_pattern  + r")"
-    quantity_pattern = re.compile(quantity_pattern_string, re.UNICODE)
-
-    conversion_pattern_string = r"(.*)\sto\s(" + metric_pattern + ")"
-    conversion_pattern = re.compile(conversion_pattern_string)
-
-    for number, scriptline in enumerate(scriptlines):
-        # pre-processing step one: replace plural metric names with singular
-        for match in plural_pattern.finditer(scriptline):
-            full_prefix, plural_metric = match.groups()
-
-            found_prefix = None
-            if full_prefix:
-                for prefix in list(Metric.Prefix.defined_prefixes.values()):
-                    if prefix.name == full_prefix:
-                        found_prefix = prefix
-                        break
-                if not found_prefix:
-                    raise MeasurementParsingException("Could not find Metric Prefix '%s'." % found_prefix)
-
-            found_metric = None
-            for metric in list(Metric.defined_metrics_by_symbol.values()):
-                if metric.plural_name == plural_metric:
-                    found_metric = metric
-                    break
-
-            if not found_metric:
-                raise MeasurementParsingException("Could not find Metric '%s'." % plural_metric)
-
-            if found_prefix:
-                found_metric = found_prefix * found_metric
-
-            scriptline = scriptline.replace(match.string[match.start():match.end()],
-                                            found_metric.name)
-
-        # pre-processing step two: replace full metric names with symbols
-        for match in full_metric_name_pattern.finditer(scriptline):
-            full_prefix, full_metric = match.groups()
-
-            found_prefix = None
-            if full_prefix:
-                for prefix in list(Metric.Prefix.defined_prefixes_by_symbol.values()):
-                    if prefix.name == full_prefix:
-                        found_prefix = prefix
-                        break
-                if not found_prefix:
-                    raise MeasurementParsingException("Could not find Metric Prefix '%s'." % found_prefix)
-
-            found_metric = None
-            for metric in list(Metric.defined_metrics_by_symbol.values()):
-                if metric.name == full_metric:
-                    found_metric = metric
-                    break
-
-            if not found_metric:
-                raise MeasurementParsingException("Could not find Metric '%s'." % full_metric)
-
-            if found_prefix:
-                found_metric = found_prefix * found_metric
-
-            scriptline = scriptline.replace(match.string[match.start():match.end()],
-                                            found_metric.typographical_symbol)
-
-        # preprocessing step three: match each occurrence of a Quantity
-        for match in quantity_pattern.finditer(scriptline):
-            quantity = Quantity.parse(match.string[match.start():match.end()])
-            scriptline = scriptline.replace(match.string[match.start():match.end()], repr(quantity))
-
-        # line preprocessing step three.a: convert " to <metric> " statements
-        for match in conversion_pattern.finditer(scriptline):
-            quantity_repr, to_metric_symbol = match.groups()[0:2]
-            to_metric = Metric.parse(to_metric_symbol)
-            scriptline = scriptline.replace(match.string[match.start():match.end()],
-                                            "(" + quantity_repr + ").to(" + repr(to_metric) + ")")
-
-        preparedlines.append(scriptline)
-
-    # preprocessing step four: make the last line the return value
-    preparedlines[-1] = "____return_value____ = (" + preparedlines[-1] + ")"
-
-    # step five: execute as Python code
-    safe_globals = {
-                    # all builtins are turned off by default
-                    "__builtins__" : None,
-
-                    # the Dimension/Metric/Quantity classes, of course
-                    "Dimension" : Dimension,
-                    "Metric" : Metric,
-                    "Quantity" : Quantity,
-
-                    # some useful and safe built-ins
-                    "set" : set,
-                    "frozenset" : frozenset
-                    }
-    safe_locals = {}
-
-    python_code = "\n".join(preparedlines)
-
-    exec(python_code, safe_globals, safe_locals)
-
-    # step six: evaluate the return value
-    if "____return_value____" in safe_locals:
-        return safe_locals["____return_value____"]
-    else:
-        return None

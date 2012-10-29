@@ -125,7 +125,7 @@ class QuantityTestCase(unittest.TestCase):
         assert Quantity(5, Meter).__add__(5) == NotImplemented
         assert Quantity(5, Meter).__sub__(5) == NotImplemented
         assert Quantity(5, Meter).__mul__(5) == NotImplemented
-        assert Quantity(5, Meter).__div__(5) == NotImplemented
+        assert Quantity(5, Meter).__floordiv__(5) == NotImplemented
         assert Quantity(5, Meter).__truediv__(5) == NotImplemented
 
     def testEqualityOperatorsOutsideOfQuantityAreOnlySupportedForNumbers(self):
@@ -151,6 +151,16 @@ class QuantityTestCase(unittest.TestCase):
         assert abs(Quantity(-5, Meter)) == Quantity(5, Meter)
         assert -Quantity(-5, Meter) == Quantity(5, Meter)
         assert -Quantity(5, Meter) == Quantity(-5, Meter)
+
+    def testConstructionViaStrings(self):
+        assert Quantity(5, "m") == 5 * Meter
+
+    def testCompositeValues(self):
+        assert Quantity(5, "m").__composite_values__() == (5, "m")
+
+    def testNonZero(self):
+        assert bool(Quantity(1, "m"))
+        assert not bool(Quantity(0, "m"))
 
     def testParsingNonsense(self):
         try:
@@ -210,6 +220,10 @@ class QuantityTestCase(unittest.TestCase):
         string_representations.should_represent_orthogonally(Quantity(101231937212349871928471234, Meter / Second))
         string_representations.should_represent_orthogonally(Quantity(int(6), Ohm))
         string_representations.should_represent_orthogonally(Quantity(101231937212349871928471234, Ohm))
+
+    def testTrueAndFloorDivision(self):
+        assert Quantity(1, Meter) / Quantity(2, Meter) == 0.5
+        assert Quantity(1, Meter) // Quantity(2, Meter) == 0
 
     def testArithmeticAxiomsOverReals(self):
         arithmetic.axioms.additive_identity = Quantity(0.0, One)
@@ -305,8 +319,20 @@ class QuantityTestCase(unittest.TestCase):
 
     def testSquareRoot(self):
         assert Quantity(16.0, Meter**2)**0.5 == Quantity(4.0, Meter)
+
     def testCubeRoot(self):
         arithmetic.assert_close(Quantity(64.0, Meter**3)**0.3333333333333333333, Quantity(4.0, Meter))
+
+    def testNonNumericExponent(self):
+        try:
+            Quantity(10, Meter)**[]
+        except TypeError as e:
+            assert six.text_type(e) in (
+                    "unsupported operand type(s) for ** or pow(): 'Quantity' and 'list'",
+                    "operands do not support **"
+                   ), six.text_type(e)
+        else:
+            assert False, "Quantity should be immutable"
 
     def testOhmsLaw(self):
         "Ohm's Law (http://en.wikipedia.org/wiki/Ohm%27s_law) is a great test of complex dimensional math"
