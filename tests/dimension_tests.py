@@ -110,6 +110,15 @@ class DimensionTestCase(unittest.TestCase):
         assert (Dimension(terms = [Dimension.Term(Dimension("Fake", "F"), -1), Dimension.Term(Dimension("Untruthy", "UT"), -1)]) !=
                 Dimension(terms = [Dimension.Term(Dimension("Untruthy", "UT"), -1), Dimension.Term(Dimension("Untruthy", "UT"), -1)]))
 
+        assert Dimension.Term(Dimension("Untruthy", "UT"), -1) != Dimension.Term(Dimension("Fake", "F"), -1)
+
+    def testUnicode(self):
+        assert str(Dimension.Term(Dimension("Untruthy", "UT"), 11)) == "UT^11"
+
+    def testDefiningFully(self):
+        ut = Dimension("Untruthy", "UT", terms=[Dimension.Term(Dimension("Fake", "F"), 11)])
+        assert str(ut) == "UT"
+
     def testArithmeticInASingleDimension(self):
         "Tests that basic arithmetic in a single dimension is supported."
         unitless = Length / Length

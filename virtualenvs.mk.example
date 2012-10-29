@@ -1,3 +1,3 @@
 PYTHON27 = ~/Development/environments/measurement2.7
 PYTHON32 = ~/Development/environments/measurement3.2
-PYPY18 = ~/Development/environments/measurement-pypy
+PYPY19 = ~/Development/environments/measurement-pypy

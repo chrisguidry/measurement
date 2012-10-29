@@ -143,7 +143,7 @@ class Dimension(Immutable):
             return "Dimension.Term(" + repr(self.dimension) + ", " + six.text_type(self.power) + ")"
         def __unicode__(self):
             "Produces a string representation of this Dimension.Term, in typographical symbols"
-            return self.typographical_symbol + self.power_as_typographical_symbol
+            return self.dimension.typographical_symbol + self.power_as_typographical_symbol
         __str__ = __unicode__
 
     def __new__(cls, *args, **kwargs):
