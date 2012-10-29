@@ -9,7 +9,7 @@ from measurement import *
 from . import arithmetic
 from . import string_representations
 
-class SIPrefixTestCase(unittest.TestCase):
+class PrefixTestCase(unittest.TestCase):
     def setUp(self):
         arithmetic.axioms.expectations = {
                                             "commutative": False,
@@ -237,3 +237,46 @@ class SIPrefixTestCase(unittest.TestCase):
         assert 29 * (Milli * Meter) < 3 * (Centi * Meter)
         assert 29 * (Milli * Meter) <= 3 * (Centi * Meter)
         assert 30 * (Milli * Meter) <= 3 * (Centi * Meter)
+
+    def testAddingPrefixes(self):
+        assert Kilo + Mega == Giga
+        assert Kilo + Milli == None
+
+        try:
+            Kilo + Kibi
+        except TypeError as e:
+            assert six.text_type(e) == "unsupported operand type(s) for +: 'Prefix' and 'Prefix'", six.text_type(e)
+        else:
+            assert False, "You can't add prefixes in different bases."
+
+        try:
+            Kilo + 1
+        except TypeError as e:
+            assert six.text_type(e) == "unsupported operand type(s) for +: 'Prefix' and 'int'", six.text_type(e)
+        else:
+            assert False, "You can't add Prefixes to anything besides Prefixes."
+
+    def testSubtractingPrefixes(self):
+        assert Giga - Kilo == Mega
+        assert Kilo - Kilo == None
+
+        try:
+            Kilo - Kibi
+        except TypeError as e:
+            assert six.text_type(e) == "unsupported operand type(s) for -: 'Prefix' and 'Prefix'", six.text_type(e)
+        else:
+            assert False, "You can't subtract prefixes in different bases."
+
+        try:
+            Kilo - 1
+        except TypeError as e:
+            assert six.text_type(e) == "unsupported operand type(s) for -: 'Prefix' and 'int'", six.text_type(e)
+        else:
+            assert False, "You can't subtract Prefixes to anything besides Prefixes."
+
+    def testPrefixInequality(self):
+        assert Giga != Kilo
+        assert Kilo != Milli
+
+    def testUnicode(self):
+        assert str(Kilo) == Kilo.typographical_symbol

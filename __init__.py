@@ -527,7 +527,8 @@ class Metric(Immutable):
             return "Metric.Term(" + repr(self.prefix) + ", " + repr(self.metric) + ", " + six.text_type(self.power) + ")"
         def __unicode__(self):
             "Produces a typographical string representing this Metric.Term."
-            return self.prefix.typographical_symbol + self.typographical_symbol + self.power_as_typographical_symbol
+            return ((self.prefix.typographical_symbol if self.prefix.typographical_symbol != '1' else '') +
+                    self.metric.typographical_symbol + self.power_as_typographical_symbol)
         __str__ = __unicode__
 
     class Prefix(Immutable):

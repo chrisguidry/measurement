@@ -103,6 +103,12 @@ class MetricTestCase(unittest.TestCase):
         assert (Metric(terms = [Metric.Term(None, Metric("faken", "f", Dimension("Fake", "F")), -1), Metric.Term(None, Metric("untrut", "ut", Dimension("Untruthy", "UT")), -1)]) !=
                 Metric(terms = [Metric.Term(None, Metric("untrut", "ut", Dimension("Untruthy", "UT")), -1), Metric.Term(None, Metric("untrut", "ut", Dimension("Untruthy", "UT")), -1)]))
 
+        assert (Metric.Term(None, Metric("faken", "f", Dimension("Fake", "F")), -1) !=
+                Metric.Term(None, Metric("faken", "f", Dimension("Fake", "F")), 1))
+
+    def testUnicode(self):
+        self.assertEqual(str(Metric.Term(None, Metric("faken", "f", Dimension("Fake", "F")), 11)), "f^11")
+
     def testArithmeticOutsideOfClassOnlySupportsNumbers(self):
         assert Meter.__mul__("hi") == NotImplemented
         assert Meter.__rmul__("hi") == NotImplemented
@@ -258,3 +264,8 @@ class MetricTestCase(unittest.TestCase):
         assert  9.999999999999999 != Ten
         assert Ten != 10.000000000000001
         assert 10.000000000000001 != Ten
+
+    def testRegistration(self):
+        assert Meter in Metric.all()
+        assert Meter == Metric.get_by_name("meter")
+        assert Metric.get_by_name("foobar") == None
