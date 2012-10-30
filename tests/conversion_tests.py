@@ -2,6 +2,7 @@
 
 from __future__ import division, unicode_literals
 import six
+from decimal import Decimal
 
 import unittest
 
@@ -54,6 +55,22 @@ class DimensionTestCase(unittest.TestCase):
             assert six.text_type(e) == "Quantity '1 '' is not convertible with this conversion function between °R and °C", six.text_type(e)
         else:
             assert False, "Passing the wrong value should have thrown an error."
+
+    def testFindingNoConversion(self):
+        self.assertEqual(Metric.find_conversion(Inch, Celsius), None)
+
+    def testCoercedConversions(self):
+        conversion = Metric.find_conversion(Meter, Kilo*Meter)
+        self.assertTrue(conversion)
+        self.assertEqual(conversion(1000*Meter), 1*(Kilo*Meter))
+        self.assertEqual(conversion(Decimal("1000")*Meter), 1*(Kilo*Meter))
+
+    def testCoercedConversionsPartTwo(self):
+        faken = Metric("faken", "f", Dimension("Truth"))
+        untruthy = Metric("untruthy", "ut", Dimension("Truth"))
+        Metric.ScalarConversion(Quantity(10.0, faken/untruthy))
+        conversion = Metric.find_conversion(untruthy, faken)
+        self.assertEqual(conversion(Decimal(100.0) * untruthy), 1000.0 * faken)
 
     def testInformationConversions(self):
         arithmetic.assert_close(16 * Bit, 2 * Octet)

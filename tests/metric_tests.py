@@ -27,6 +27,13 @@ class MetricTestCase(unittest.TestCase):
         arithmetic.axioms.fake_value = None
         arithmetic.axioms.another_fake_value = None
 
+    def testCreationWithoutASymbol(self):
+        facken = Metric("facken", None, Dimension("Fake", "F"))
+        self.assertEqual(facken.typographical_symbol, "facken")
+
+        inverse_facken = Metric("invfack", derivation=One/facken)
+        self.assertEqual(inverse_facken.typographical_symbol, "invfack")
+
     def testImmutability(self):
         faken = Metric("faken", "f", Dimension("Fake", "F"))
         "The faken is a unit of measuring how fake something is"
@@ -128,6 +135,14 @@ class MetricTestCase(unittest.TestCase):
     def testParsingEmpty(self):
         assert Metric.symbol_string_to_terms("") == []
 
+    def testParsingGarbage(self):
+        try:
+            Metric.parse("-")
+        except MeasurementParsingException as e:
+            self.assertEqual(six.text_type(e), "'-' doesn't seem to correspond to any defined Metrics.")
+        else:
+            assert False, "Parsing '-' should have raised."
+
     def testMultiplicationByOne(self):
         assert (One * One) == One
         assert (One * Meter) == Meter
@@ -144,6 +159,8 @@ class MetricTestCase(unittest.TestCase):
         assert One.reduce() == 1 * One
         assert (Ten**0).reduce() == 1 * One
         assert One**14 == One
+        assert Meter**0 == One
+        assert Metric(terms=[Metric.Term(None, Meter, 0.0)]) == One
 
     def testTen(self):
         assert Ten == Ten
@@ -268,6 +285,7 @@ class MetricTestCase(unittest.TestCase):
     def testInequality(self):
         assert not (Meter == 2)
         assert Meter != 2
+        assert Metric.Term(None, Meter, 1) != Metric.Term(None, Second, 1)
 
     def testRegistration(self):
         assert Meter in Metric.all()

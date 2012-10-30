@@ -260,6 +260,12 @@ class PrefixTestCase(unittest.TestCase):
         assert Giga - Kilo == Mega
         assert Kilo - Kilo == None
 
+        unnamed = Mega - Hecto
+        self.assertEqual(unnamed.name, "10^4")
+        self.assertEqual(unnamed.typographical_symbol, "10^4")
+        self.assertEqual(unnamed.base, 10)
+        self.assertEqual(unnamed.power, 4)
+
         try:
             Kilo - Kibi
         except TypeError as e:

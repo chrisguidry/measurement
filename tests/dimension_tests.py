@@ -80,6 +80,10 @@ class DimensionTestCase(unittest.TestCase):
         else:
             assert False, "Dimension terms should be immutable"
 
+    def testIdentifyingNumber(self):
+        "Tests an edge case in Dimension.identify."
+        self.assertEqual(Dimension.identify([Dimension.Term(Number, 0)]), ("number", "N"))
+
     def testHashability(self):
         "Tests that Dimension has good hashes."
         assert hash(Dimension("Fake", "F")) != 0

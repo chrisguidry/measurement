@@ -170,6 +170,10 @@ class QuantityTestCase(unittest.TestCase):
         else:
             assert False, "Parsing nonsense should have thrown"
 
+    def testCoercion(self):
+        self.assertEqual(Decimal("10.0") * Meter, 10.0 * Meter)
+        self.assertEqual(10.0 * Meter, Decimal("10.0") * Meter)
+
     def testArithmeticAxiomsOverIntegers(self):
         arithmetic.axioms.additive_identity = Quantity(0, One)
         arithmetic.axioms.distributable_with = Quantity(4, One)

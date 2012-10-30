@@ -381,8 +381,6 @@ class Dimension(Immutable):
             matched_symbol = match[0]
             matched_power = match[1]
 
-            if matched_symbol not in Dimension.defined_dimensions_by_symbol:
-                raise MeasurementParsingException("Unrecognized symbol '%s' when parsing dimension string '%s'" % (matched_symbol, symbol_string))
             dimension = Dimension.defined_dimensions_by_symbol[matched_symbol]
 
             powers = {"⁰": 0,
@@ -913,10 +911,6 @@ class Metric(Immutable):
         if symbol_denominator:
             symbol += "/" + symbol_denominator
 
-        if name == "1" and symbol == "1":
-            name = Number.name
-            symbol = Number.typographical_symbol
-
         return (name, symbol)
 
     @classmethod
@@ -940,7 +934,7 @@ class Metric(Immutable):
         terms = numerator_terms + denominator_terms
 
         if not terms:
-          raise MeasurementParsingException("'%s' doesn't seem to correspond to any defined Metrics" % typographical_symbol)
+          raise MeasurementParsingException("'%s' doesn't seem to correspond to any defined Metrics." % typographical_symbol)
 
         return Metric(terms = terms)
 
@@ -1011,18 +1005,11 @@ class Metric(Immutable):
             matched_power = match[2]
 
             if matched_prefix:
-                if not matched_prefix in Metric.Prefix.defined_prefixes_by_symbol:
-                    raise MeasurementParsingException("Unrecognized prefix symbol '%s' when parsing metric string '%s'" % (matched_prefix, symbol_string))
                 prefix = Metric.Prefix.defined_prefixes_by_symbol[matched_prefix]
             else:
                 prefix = None
 
-            if matched_symbol:
-                if not matched_symbol in Metric.defined_metrics_by_symbol:
-                    raise MeasurementParsingException("Unrecognized metric symbol '%s' when parsing metric string '%s'" % (matched_symbol, symbol_string))
-                metric = Metric.defined_metrics_by_symbol[matched_symbol]
-            else:
-                raise MeasurementParsingException("No metric symbol found when parsing metric string '%s'" % symbol_string)
+            metric = Metric.defined_metrics_by_symbol[matched_symbol]
 
             powers = {
                       "⁰": 0,
@@ -1180,10 +1167,6 @@ class Metric(Immutable):
             self.metric = metric
             Metric.conversions[metric] = self
 
-        def applies_to(self, metric):
-            "Determines whether this conversion could apply to the metric in question."
-            return (self.metric == metric or self.metric == (One / metric))
-
     class ScalarConversion(Immutable, Conversion):
         "A Conversion which is simply a multiplication or division by a scalar value."
 
@@ -1277,9 +1260,7 @@ class Metric(Immutable):
 
     @classmethod
     def _coerced_multiply(cls, left, right):
-        if isinstance(left, decimal.Decimal) and isinstance(right, float):
-            return left * decimal.Decimal(six.text_type(right))
-        elif isinstance(left, float) and isinstance(right, decimal.Decimal):
+        if isinstance(left, float) and isinstance(right, decimal.Decimal):
             return decimal.Decimal(six.text_type(left)) * right
         else:
             return left * right
